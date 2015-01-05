@@ -7,6 +7,7 @@ require 'nokogiri'
 
 require_relative 'mws-rb/query'
 require_relative 'mws-rb/connection'
+require_relative 'mws-rb/request'
 require_relative 'mws-rb/api/base'
 require_relative 'mws-rb/api/orders'
 require_relative 'mws-rb/api/reports'
