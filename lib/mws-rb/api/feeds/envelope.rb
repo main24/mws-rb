@@ -1,8 +1,12 @@
 class MWS::API::Feeds::Envelope
   def initialize(params={})
-    @envelope = build_envelope(params)
+    @params = params
+
+    @envelope = build_envelope
     validate! unless params[:skip_schema_validation] == true
   end
+
+  attr_reader :params
 
   def valid?
     self.errors.count == 0
@@ -40,38 +44,38 @@ class MWS::API::Feeds::Envelope
   end
 
   private
-  def build_envelope(params={})
-    xml = Builder::XmlMarkup.new
-    xml.instruct!
 
-    xml.AmazonEnvelope do
-      xml.Header do
-        xml.DocumentVersion "1.01"
-        xml.MerchantIdentifier params[:merchant_id]
+    def build_envelope
+      xml = Builder::XmlMarkup.new
+      xml.instruct!
+
+      xml.AmazonEnvelope do
+        xml.Header do
+          xml.DocumentVersion "1.01"
+          xml.MerchantIdentifier params[:merchant_id]
+        end
+
+        xml.MessageType params[:message_type].to_s.camelize
+        xml.PurgeAndReplace params[:purge_and_replace] || false
+
+        messages_array.each { |message| xml << message_xml(message) }
       end
 
-      xml.MessageType params[:message_type].to_s.camelize
-      xml.PurgeAndReplace params[:purge_and_replace] || false
-
-      messages_array(params).map do |message|
-        xml << message_xml(message)
-      end
+      xml
     end
-    xml
-  end
 
-  def messages_array params
-    # TODO: Questinable solution. Maybe better to take into account
-    # only one of these parameters
+    def messages_array
+      # TODO: Questinable solution. Maybe better to take into account
+      # only one of these parameters
 
-    get_array(params[:message]) + get_array(params[:messages])
-  end
+      get_array(params[:message]) + get_array(params[:messages])
+    end
 
-  def get_array parameter
-    [ parameter ].flatten.compact
-  end
+    def get_array parameter
+      [ parameter ].flatten.compact
+    end
 
-  def message_xml message
-    message.to_xml(skip_instruct: true, root: "Message")
-  end
+    def message_xml message
+      message.to_xml(skip_instruct: true, root: "Message")
+    end
 end
